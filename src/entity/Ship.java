@@ -1,7 +1,7 @@
 package entity;
 
-import java.awt.Color;
 import java.util.Set;
+import java.awt.*;
 
 import engine.Cooldown;
 import engine.Core;
@@ -19,27 +19,34 @@ public class Ship extends Entity {
 	private static final int SHOOTING_INTERVAL = 750;
 	/** Speed of the bullets shot by the ship. */
 	private static final int BULLET_SPEED = -6;
+	/** Time between Special shots. */
+	private static final int SSHOOTING_INTERVAL = 10000;
+	/** Speed of the Special bullets shot by the ship. */
+	private static final int SBULLET_SPEED = -8;
 	/** Movement of the ship for each unit of time. */
 	private static final int SPEED = 2;
-	
+
+	private int SpeedUp;
+
 	/** Minimum time between shots. */
 	private Cooldown shootingCooldown;
+	/** Minimum time between Special shots. */
+	private Cooldown SshootingCooldown;
 	/** Time spent inactive between hits. */
 	private Cooldown destructionCooldown;
 
 	/**
 	 * Constructor, establishes the ship's properties.
 	 * 
-	 * @param positionX
-	 *            Initial position of the ship in the X axis.
-	 * @param positionY
-	 *            Initial position of the ship in the Y axis.
+	 * @param positionX Initial position of the ship in the X axis.
+	 * @param positionY Initial position of the ship in the Y axis.
 	 */
 	public Ship(final int positionX, final int positionY) {
 		super(positionX, positionY, 13 * 2, 8 * 2, Color.GREEN);
 
 		this.spriteType = SpriteType.Ship;
 		this.shootingCooldown = Core.getCooldown(SHOOTING_INTERVAL);
+		this.SshootingCooldown = Core.getCooldown(SSHOOTING_INTERVAL);
 		this.destructionCooldown = Core.getCooldown(1000);
 	}
 
@@ -48,29 +55,35 @@ public class Ship extends Entity {
 	 * reached.
 	 */
 	public final void moveRight() {
-		this.positionX += SPEED;
+		this.positionX = this.positionX + SPEED + SpeedUp;
 	}
 
 	/**
-	 * Moves the ship speed units left, or until the left screen border is
-	 * reached.
+	 * Moves the ship speed units left, or until the left screen border is reached.
 	 */
 	public final void moveLeft() {
-		this.positionX -= SPEED;
+		this.positionX = this.positionX - SPEED - SpeedUp;
 	}
 
 	/**
 	 * Shoots a bullet upwards.
 	 * 
-	 * @param bullets
-	 *            List of bullets on screen, to add the new bullet.
+	 * @param bullets List of bullets on screen, to add the new bullet.
 	 * @return Checks if the bullet was shot correctly.
 	 */
 	public final boolean shoot(final Set<Bullet> bullets) {
 		if (this.shootingCooldown.checkFinished()) {
 			this.shootingCooldown.reset();
-			bullets.add(BulletPool.getBullet(positionX + this.width / 2,
-					positionY, BULLET_SPEED));
+			bullets.add(BulletPool.getBullet(positionX + this.width / 2, positionY, BULLET_SPEED));
+			return true;
+		}
+		return false;
+	}
+
+	public final boolean sshoot(final Set<SBullet> sbullets) {
+		if (this.SshootingCooldown.checkFinished()) {
+			this.SshootingCooldown.reset();
+			sbullets.add(SBulletPool.getSBullet(positionX + this.width / 2, positionY, SBULLET_SPEED));
 			return true;
 		}
 		return false;
@@ -88,6 +101,8 @@ public class Ship extends Entity {
 
 	/**
 	 * Switches the ship to its destroyed state.
+	 * 
+	 * @throws InterruptedException
 	 */
 	public final void destroy() {
 		this.destructionCooldown.reset();
@@ -109,5 +124,28 @@ public class Ship extends Entity {
 	 */
 	public final int getSpeed() {
 		return SPEED;
+	}
+
+	public final void setSpeed() {
+		this.SpeedUp = 5;
+
+	}
+
+	public final void resetSpeed() {
+		this.SpeedUp = 0;
+
+	}
+
+	// functions , set the shootingcooldown
+	public final void setShootingCooldown() {
+
+		this.shootingCooldown = Core.getCooldown(100);
+
+	}
+
+	public final void resetShootingCooldown() {
+
+		this.shootingCooldown = Core.getCooldown(750);
+
 	}
 }
